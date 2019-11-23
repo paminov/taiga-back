@@ -36,6 +36,8 @@ class BitBucketViewSet(BaseWebhookApiViewSet):
         "repo:push": event_hooks.PushEventHook,
         "issue:created": event_hooks.IssuesEventHook,
         "issue:comment_created": event_hooks.IssueCommentEventHook,
+        "pr:opened": event_hooks.PrEventHook,
+        "pr:merged": event_hooks.PrEventHook
     }
 
     def _validate_signature(self, project, request):

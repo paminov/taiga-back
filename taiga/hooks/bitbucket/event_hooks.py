@@ -83,3 +83,26 @@ class PushEventHook(BaseBitBucketEventHook, BasePushEventHook):
                     "commit_short_message": message.split("\n")[0].strip(),
                 })
         return result
+
+
+class PrEventHook(BaseBitBucketEventHook, BasePushEventHook):
+    change_type = "pull request"
+
+    def get_data(self):
+        result = []
+        pr = self.payload.get("pullRequest", {})
+        message = pr.get("title")
+        if pr.get("state","") == "OPEN":
+            message += " #ready-for-test"
+        elif pr.get("state", "") == "MERGED":
+            message += " #closed"
+        result.append({
+            'user_id': pr.get('author', {}).get('user', {}).get('id', None),
+            "user_name": pr.get('author', {}).get('user', {}).get('displayName', None),
+            "user_url": pr.get('author', {}).get('user',{}).get('links', {}).get('self', [{}])[0].get('href'),
+            "commit_id": pr.get("toRef", {}).get("latestCommit"),
+            "commit_url": pr.get('links', {}).get('self', [{}])[0].get('href'),
+            "commit_message": message.strip(),
+            "commit_short_message": message.split("\n")[0].strip(),
+        })
+        return result

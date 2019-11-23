@@ -141,6 +141,8 @@ class BaseNewIssueEventHook(BaseEventHook):
 
 
 class BasePushEventHook(BaseEventHook):
+    change_type = "commit"
+
     def get_data(self):
         raise NotImplementedError
 
@@ -154,17 +156,19 @@ class BasePushEventHook(BaseEventHook):
             )
         _status_change_message = _(
             "{user_text} changed the status from "
-            "[{platform} commit]({commit_url} \"See commit '{commit_id} - {commit_short_message}'\")\n\n"
+            "[{platform} {change_type}]({commit_url} \"See commit '{commit_id} - {commit_short_message}'\")\n\n"
             "  - Status: **{src_status}** → **{dst_status}**"
         )
         _simple_status_change_message = _(
-            "Changed status from {platform} commit.\n\n"
+            "Changed status from {platform} {change_type}.\n\n"
             " - Status: **{src_status}** → **{dst_status}**"
         )
         try:
-            return _status_change_message.format(platform=self.platform, user_text=user_text, **kwargs)
+            return _status_change_message.format(platform=self.platform, user_text=user_text,
+                                                 change_type=self.change_type, **kwargs)
         except Exception:
-            return _simple_status_change_message.format(platform=self.platform)
+            return _simple_status_change_message.format(platform=self.platform,
+                                                        change_type=self.change_type)
 
     def generate_commit_reference_comment(self, **kwargs):
         if kwargs.get('user_url', None) is None:
@@ -177,17 +181,19 @@ class BasePushEventHook(BaseEventHook):
 
         _status_change_message = _(
             "This {type_name} has been mentioned by {user_text} "
-            "in the [{platform} commit]({commit_url} \"See commit '{commit_id} - {commit_short_message}'\") "
+            "in the [{platform} {change_type}]({commit_url} \"See {change_type} '{commit_id} - {commit_short_message}'\") "
             "\"{commit_message}\""
         )
         _simple_status_change_message = _(
-            "This issue has been mentioned in the {platform} commit "
+            "This issue has been mentioned in the {platform} {change_type} "
             "\"{commit_message}\""
         )
         try:
-            return _status_change_message.format(platform=self.platform, user_text=user_text, **kwargs)
+            return _status_change_message.format(platform=self.platform, user_text=user_text,
+                                                 change_type=self.change_type, **kwargs)
         except Exception:
-            return _simple_status_change_message.format(platform=self.platform)
+            return _simple_status_change_message.format(platform=self.platform,
+                                                        change_type=self.change_type)
 
     def get_item_classes(self, ref):
         if Epic.objects.filter(project=self.project, ref=ref).exists():
@@ -237,7 +243,7 @@ class BasePushEventHook(BaseEventHook):
             consumed_refs = []
 
             # Status changes
-            p = re.compile("tg-(\d+) +#([-\w]+)")
+            p = re.compile("tg-(\d+).*#([-\w]+)")
             for m in p.finditer(commit['commit_message'].lower()):
                 ref = m.group(1)
                 status_slug = m.group(2)

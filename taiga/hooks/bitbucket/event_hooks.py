@@ -92,10 +92,11 @@ class PrEventHook(BaseBitBucketEventHook, BasePushEventHook):
         result = []
         pr = self.payload.get("pullRequest", {})
         message = pr.get("title")
+
         if pr.get("state","") == "OPEN":
-            message += " #ready-for-test"
+            message = re.sub(r'(TG-\d+)', r'\1  #ready-for-test', message)
         elif pr.get("state", "") == "MERGED":
-            message += " #closed"
+            message = re.sub(r'(TG-\d+)', r'\1  #closed', message)
         result.append({
             'user_id': pr.get('author', {}).get('user', {}).get('id', None),
             "user_name": pr.get('author', {}).get('user', {}).get('displayName', None),
